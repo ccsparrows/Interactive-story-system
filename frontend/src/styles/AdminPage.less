@@ -1,0 +1,148 @@
+/* 
+  AdminPage styles
+*/
+
+.admin-layout {
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+.admin-content {
+  padding: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  .css-var-root.ant-typography{
+    --ant-typography-title-margin-bottom: 0.9em !important;
+  }
+}
+
+.admin-tabs-container {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  .ant-tabs-nav-list {
+    margin-left: 20px !important;
+  }
+}
+
+.admin-footer {
+  text-align: center;
+  margin-top: 40px;
+  padding-bottom: 20px;
+}
+
+/* ImageUploader Component */
+.image-uploader-wrapper {
+  border: 1px solid #f0f0f0;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fafafa;
+
+  .radio-group-container {
+    margin-bottom: 12px;
+  }
+
+  .input-prefix-icon {
+    color: #bfbfbf;
+  }
+
+  .upload-hint {
+    font-size: 12px;
+    margin-left: 8px;
+  }
+
+  .image-preview-container {
+    margin-top: 12px;
+    text-align: center;
+    background: #fff;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px dashed #d9d9d9;
+
+    .preview-image {
+      object-fit: contain;
+    }
+  }
+}
+
+/* StoryForm Component */
+.story-form {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.pages-section {
+  margin-top: 24px;
+
+  .pages-section-title {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .page-item-card {
+    margin-bottom: 24px;
+    border: 1px solid #e8e8e8;
+
+    .ant-card-head {
+      background: #fafafa;
+    }
+  }
+
+  .gesture-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
+
+.form-actions {
+  margin-top: 24px;
+  text-align: center;
+
+  .save-button {
+    min-width: 120px;
+  }
+}
+
+/* StoryList Component */
+.edit-btn {
+  color: #1890ff;
+}
+
+.story-avatar-container {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+
+  .story-avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .story-avatar-placeholder {
+    font-size: 24px;
+    font-weight: bold;
+    color: #d9d9d9;
+  }
+}
+
+.story-id-text {
+  font-size: 12px;
+}
+

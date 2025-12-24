@@ -1,0 +1,98 @@
+[
+  {
+    "id": "story_001",
+    "title": "魔法森林探险",
+    "type": "interactive",
+    "cover": "forest_cover.jpg",
+    "pages": [
+      {
+        "pageId": 1,
+        "content": "很久很久以前，有一片神秘的魔法森林。你想进去看看吗？",
+        "image": "forest_entrance.jpg",
+        "requiredGesture": "THUMB_UP",
+        "gestureHint": "竖起大拇指确认进入！",
+        "animationTrigger": "fade_in"
+      },
+      {
+        "pageId": 2,
+        "content": "哎呀！前面有一块大石头挡住了路。我们需要把它推开！",
+        "image": "big_rock.jpg",
+        "requiredGesture": "OPEN_PALM",
+        "gestureHint": "张开手掌向前推！",
+        "animationTrigger": "shake"
+      },
+      {
+        "pageId": 3,
+        "content": "哇！一只友好的小精灵飞过来了。和它打个招呼吧！",
+        "image": "fairy.jpg",
+        "requiredGesture": "WAVE",
+        "gestureHint": "挥挥手和精灵打招呼！",
+        "animationTrigger": "sparkle"
+      },
+      {
+        "pageId": 4,
+        "content": "小精灵送给你一颗爱心宝石。收下它吧！",
+        "image": "gem.jpg",
+        "requiredGesture": "HEART",
+        "gestureHint": "双手比心接收礼物！",
+        "animationTrigger": "zoom_in"
+      }
+    ]
+  },
+  {
+    "id": "story_002",
+    "title": "小兔子的午睡",
+    "type": "non-interactive",
+    "cover": "",
+    "pages": [
+      {
+        "pageId": 1,
+        "content": "阳光明媚的下午，小兔子在草地上睡着了。",
+        "image": "rabbit_sleep.jpg",
+        "requiredGesture": null,
+        "gestureHint": "点击屏幕继续",
+        "animationTrigger": "fade_in"
+      },
+      {
+        "pageId": 2,
+        "content": "梦里，它飞到了云彩上。",
+        "image": "rabbit_dream.jpg",
+        "requiredGesture": null,
+        "gestureHint": "点击屏幕继续",
+        "animationTrigger": "float"
+      },
+      {
+        "pageId": 3,
+        "content": "醒来时，太阳已经下山了。该回家了。",
+        "image": "sunset.jpg",
+        "requiredGesture": null,
+        "gestureHint": "点击屏幕结束",
+        "animationTrigger": "fade_out"
+      }
+    ]
+  },
+  {
+    "id": "story_003",
+    "title": "海底大冒险",
+    "type": "interactive",
+    "cover": "ocean_cover.jpg",
+    "pages": [
+      {
+        "pageId": 1,
+        "content": "我们要潜入深海了，准备好了吗？",
+        "image": "submarine.jpg",
+        "requiredGesture": "THUMB_UP",
+        "gestureHint": "竖起大拇指出发！",
+        "animationTrigger": "dive"
+      },
+      {
+        "pageId": 2,
+        "content": "看！是一群小丑鱼。和它们打个招呼。",
+        "image": "clownfish.jpg",
+        "requiredGesture": "WAVE",
+        "gestureHint": "挥挥手！",
+        "animationTrigger": "swim"
+      }
+    ]
+  }
+]

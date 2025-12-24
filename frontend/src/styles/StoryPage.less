@@ -1,0 +1,257 @@
+.story-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f0f2f5;
+  background-image: radial-gradient(#e6f7ff 2px, transparent 2px);
+  background-size: 30px 30px; /* 点阵背景 */
+
+  &.loading {
+    font-size: 24px;
+    color: #1890ff;
+    font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+  }
+
+  .story-card-motion-wrapper {
+    width: 100%;
+    max-width: 1100px;
+    height: 85vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .story-card {
+    width: 100%;
+    height: 100%;
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15), 0 0 0 10px rgba(255, 255, 255, 0.5); /* 双重边框效果 */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fffaf0; /* 暖色调背景，像纸张 */
+    border: none;
+
+    .ant-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      position: relative; // 为绝对定位的书签提供参考
+    }
+
+    // 书签样式
+    .bookmark-nav {
+      position: absolute;
+      top: -10px; // 稍微向上突出一点
+      right: 40px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.2));
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: translateY(5px);
+      }
+
+      .bookmark-content {
+        background: #ff7875; // 红色书签
+        background: linear-gradient(135deg, #ff9c6e 0%, #ff7875 100%);
+        padding: 12px 8px 4px;
+        border-radius: 4px 4px 0 0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #fff;
+        box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3);
+
+        .page-num {
+          font-family: 'Comic Sans MS', cursive;
+          font-weight: bold;
+          font-size: 16px;
+          min-width: 50px;
+          text-align: center;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-arrow {
+          color: #fff;
+          &:hover {
+            background: rgba(255, 255, 255, 0.2);
+          }
+          &:disabled {
+            color: rgba(255, 255, 255, 0.5);
+            background: transparent;
+          }
+        }
+      }
+
+      .bookmark-tail {
+        width: 100%;
+        height: 15px;
+        background: #ff7875;
+        background: linear-gradient(135deg, #ff9c6e 0%, #ff7875 100%);
+        clip-path: polygon(0 0, 50% 100%, 100% 0);
+        margin-top: -1px; // 消除缝隙
+      }
+    }
+
+    /* 动态布局支持 */
+    &.layout-right .content-body {
+      flex-direction: row-reverse;
+    }
+
+    .manual-next-btn {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      z-index: 100;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .content-body {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      padding: 40px;
+      gap: 40px;
+      overflow: hidden;
+
+      @media (max-width: 768px) {
+        flex-direction: column !important; /* 移动端强制垂直 */
+        padding: 20px;
+        gap: 20px;
+      }
+
+      .image-container {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        min-width: 0;
+
+        &::after {
+          /* 装饰性元素：图片背后的色块 */
+          content: '';
+          position: absolute;
+          width: 90%;
+          height: 90%;
+          background: var(--story-accent);
+          border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+          z-index: 0;
+          opacity: 0.8;
+          object-fit: contain;
+          border-radius: 16px;
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+          z-index: 1;
+          transform: rotate(-2deg); /* 稍微歪一点，活泼 */
+          transition: transform 0.3s ease;
+
+          &:hover {
+            transform: rotate(0deg) scale(1.02);
+          }
+        }
+      }
+
+      .text-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+
+        .story-text-wrapper {
+          background: rgba(255, 255, 255, 0.6);
+          padding: 30px;
+          border-radius: 20px;
+          box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.02);
+          border: 2px dashed var(--story-border); /* 虚线边框 */
+          max-height: 100%;
+          overflow-y: auto;
+
+          /* 自定义滚动条 */
+          &::-webkit-scrollbar {
+            width: 8px;
+          }
+          &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+          }
+          &::-webkit-scrollbar-thumb {
+            background: var(--story-border);
+            border-radius: 4px;
+          }
+          &::-webkit-scrollbar-thumb:hover {
+            background: var(--story-border);
+            filter: brightness(0.9);
+          }
+        }
+
+        .story-text {
+          color: #434343;
+          font-size: 22px;
+          line-height: 1.8;
+          font-family: 'Comic Sans MS', 'Chalkboard SE', 'YouYuan', 'Microsoft YaHei', sans-serif;
+          margin: 0;
+          text-align: justify;
+          white-space: pre-wrap;
+        }
+      }
+    }
+
+    .instruction {
+      padding: 8px 30px;
+      background: rgba(255, 255, 255, 0.8);
+      border-top: 4px solid var(--story-border);
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 80px;
+
+      .instruction-title {
+        margin: 0;
+        font-size: 18px;
+        color: #8c8c8c;
+        margin-right: 15px;
+      }
+
+      .gesture-tag {
+        font-size: 18px;
+        padding: 8px 20px;
+        border-radius: 50px;
+        border: none;
+        background: #722ed1;
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(114, 46, 209, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .anticon {
+          font-size: 20px;
+        }
+      }
+    }
+  }
+}
+
+@keyframes morph {
+  0% {
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  }
+  50% {
+    border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%;
+  }
+  100% {
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  }
+}
