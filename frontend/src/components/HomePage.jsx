@@ -103,7 +103,7 @@ const HomePage = () => {
               size="large"
               className="action-btn admin-btn"
             >
-              魔法管理
+              管理后台
             </Button>
           )}
           <Button

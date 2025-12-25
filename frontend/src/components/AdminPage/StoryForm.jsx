@@ -108,9 +108,12 @@ const StoryForm = ({ form, onFinish, isEditing, onCancel, initialValues }) => {
                     >
                       <Select placeholder="选择手势">
                         <Option value="">无 (普通阅读页)</Option>
+                        <Option value="NUMBER_ONE">☝️ 数字1</Option>
+                        <Option value="VICTORY">✌️ 数字2 (胜利手势)</Option>
+                        <Option value="OK">👌 数字3 (OK手势)</Option>
+                        <Option value="NUMBER_FOUR">4️⃣ 数字4</Option>
+                        <Option value="OPEN_PALM">✋ 数字5 (张开手掌)</Option>
                         <Option value="THUMB_UP">👍 竖起大拇指</Option>
-                        <Option value="OPEN_PALM">✋ 张开手掌</Option>
-                        <Option value="VICTORY">✌️ 胜利手势</Option>
                         <Option value="CLOSED_FIST">✊ 握拳</Option>
                         <Option value="WAVE">👋 挥挥手</Option>
                         <Option value="HEART">❤️ 比心</Option>

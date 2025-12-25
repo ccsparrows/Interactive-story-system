@@ -93,11 +93,14 @@ const StoryPage = ({ page, isAnimating, onNextPage, onPrevPage, currentPage, tot
 
   const gestureMap = {
     THUMB_UP: '👍 竖起大拇指',
-    OPEN_PALM: '✋ 张开手掌',
-    VICTORY: '✌️ 胜利手势',
+    OPEN_PALM: '✋ 张开手掌 (数字5)',
+    VICTORY: '✌️ 胜利手势 (数字2)',
     CLOSED_FIST: '✊ 握拳',
     WAVE: '👋 挥挥手',
     HEART: '🫶 比心',
+    OK: '👌 OK手势 (数字3)',
+    NUMBER_ONE: '☝️ 数字1',
+    NUMBER_FOUR: '4️⃣ 数字4',
   };
 
   return (

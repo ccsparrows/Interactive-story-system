@@ -5,6 +5,9 @@ import VictoryGesture from './gestures/VictoryGesture';
 import ThumbUpGesture from './gestures/ThumbUpGesture';
 import ClosedFistGesture from './gestures/ClosedFistGesture';
 import OpenPalmGesture from './gestures/OpenPalmGesture';
+import OkGesture from './gestures/OkGesture';
+import NumberOneGesture from './gestures/NumberOneGesture';
+import NumberFourGesture from './gestures/NumberFourGesture';
 
 class GestureService {
   constructor() {
@@ -29,10 +32,13 @@ class GestureService {
     this.strategies = [
       new HeartGesture(),
       new WaveGesture(),
-      new VictoryGesture(),
+      new OkGesture(), // OK / 3
+      new VictoryGesture(), // 2
+      new NumberOneGesture(), // 1
       new ThumbUpGesture(),
       new ClosedFistGesture(),
-      new OpenPalmGesture(),
+      new NumberFourGesture(), // 4
+      new OpenPalmGesture(), // 5 / Open Palm
     ];
   }
 

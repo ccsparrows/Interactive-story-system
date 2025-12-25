@@ -84,9 +84,13 @@ const StoryContainer = () => {
     [story, currentPageIndex, lastGestureTime, handleNextPage]
   );
 
-  // 处理非交互模式的点击翻页
+  // 处理点击翻页：如果故事是非交互类型，或者当前页不需要手势，则允许点击翻页
   const handleClick = () => {
-    if (story && story.type === 'non-interactive') {
+    if (!story) return;
+
+    const currentPage = story.pages[currentPageIndex];
+    // 如果故事本身是非交互的，或者当前页没有要求的动作，则允许点击翻页
+    if (story.type === 'non-interactive' || !currentPage?.requiredGesture) {
       handleNextPage();
     }
   };
