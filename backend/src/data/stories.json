@@ -94,5 +94,83 @@
         "animationTrigger": "swim"
       }
     ]
+  },
+  {
+    "id": "learning_count_001",
+    "title": "数数乐园：水果大餐",
+    "type": "learning",
+    "subtype": "count",
+    "cover": "fruit_cover.jpg",
+    "ageRating": "2-4岁",
+    "pages": [
+      {
+        "pageId": 1,
+        "content": "这里有几个红苹果？",
+        "image": "apples_3.jpg",
+        "requiredGesture": "OK",
+        "gestureHint": "有3个苹果，请比出 OK (数字3) 手势！",
+        "animationTrigger": "bounce"
+      },
+      {
+        "pageId": 2,
+        "content": "数一数有几根香蕉？",
+        "image": "bananas_2.jpg",
+        "requiredGesture": "VICTORY",
+        "gestureHint": "是2根香蕉，请比出耶 (数字2) 的手势！",
+        "animationTrigger": "shake"
+      }
+    ]
+  },
+  {
+    "id": "learning_math_001",
+    "title": "数学挑战：小小算术家",
+    "type": "learning",
+    "subtype": "math",
+    "cover": "math_cover.jpg",
+    "ageRating": "4-6岁",
+    "pages": [
+      {
+        "pageId": 1,
+        "content": "1 + 1 = ?",
+        "image": "math_bg.jpg",
+        "requiredGesture": "VICTORY",
+        "gestureHint": "答案是2，请比出耶的手势！",
+        "animationTrigger": "pulse"
+      },
+      {
+        "pageId": 2,
+        "content": "2 + 3 = ?",
+        "image": "math_bg.jpg",
+        "requiredGesture": "OPEN_PALM",
+        "gestureHint": "答案是5，请张开手掌！",
+        "animationTrigger": "pulse"
+      }
+    ]
+  },
+  {
+    "id": "learning_word_001",
+    "title": "英语单词：动物朋友",
+    "type": "learning",
+    "subtype": "word",
+    "cover": "animal_cover.jpg",
+    "ageRating": "3-5岁",
+    "pages": [
+      {
+        "pageId": 1,
+        "content": "C A T",
+        "image": "cat_card.jpg",
+        "requiredGesture": "NUMBER_ONE",
+        "gestureHint": "这是猫咪 (Cat)！请阅读单词进入下一词~",
+        "animationTrigger": "meow"
+      },
+      {
+        "pageId": 2,
+        "content": "D O G",
+        "image": "dog_card.jpg",
+        "requiredGesture": "NUMBER_FOUR",
+        "gestureHint": "这是狗狗 (Dog)! 请阅读单词进入下一词~",
+        "animationTrigger": "woof"
+      }
+    ]
   }
 ]

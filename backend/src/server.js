@@ -154,7 +154,24 @@ app.get('/api/stories', async (req, res) => {
       pageCount: s.pageCount,
       firstImage: s.pages ? s.pages.find((p) => p.image)?.image : null,
     }));
-    res.json(storyList);
+
+    // --- 修改开始：合并本地 JSON 数据作为测试数据 ---
+    // 为了防止 ID 冲突，只添加数据库中不存在的故事
+    const dbIds = new Set(storyList.map((s) => s.id));
+    const localStories = initialStories
+      .filter((s) => !dbIds.has(s.id))
+      .map((s) => ({
+        id: s.id,
+        title: s.title,
+        type: s.type,
+        ageRating: s.ageRating || '3-6岁',
+        cover: s.cover,
+        pageCount: s.pages ? s.pages.length : 0,
+        firstImage: s.pages ? s.pages.find((p) => p.image)?.image : null,
+      }));
+
+    res.json([...storyList, ...localStories]);
+    // --- 修改结束 ---
   } catch (error) {
     console.error('Error fetching stories:', error);
     res.status(500).json({ message: 'Error fetching stories' });
@@ -164,7 +181,14 @@ app.get('/api/stories', async (req, res) => {
 // 获取特定故事详情
 app.get('/api/stories/:id', async (req, res) => {
   try {
-    const story = await Story.findOne({ id: req.params.id });
+    let story = await Story.findOne({ id: req.params.id });
+
+    // --- 修改开始：如果数据库没找到，尝试从本地 JSON 找 ---
+    if (!story) {
+      story = initialStories.find((s) => s.id === req.params.id);
+    }
+    // --- 修改结束 ---
+
     if (story) {
       res.json(story);
     } else {

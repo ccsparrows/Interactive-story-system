@@ -1,0 +1,170 @@
+.learning-story-page {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Comic Sans MS', 'Short Stack', cursive, sans-serif;
+
+  // Background elements
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+      radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 50%),
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(0, 0, 0, 0.03) 10px,
+        rgba(0, 0, 0, 0.03) 20px
+      );
+    z-index: 0;
+    animation: rotateBackground 60s linear infinite;
+  }
+
+  @keyframes rotateBackground {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .content-card {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 30px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    width: 80%;
+    max-width: 900px;
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 5px solid #fff;
+    transition: all 0.5s ease;
+
+    &.math-mode {
+      border-color: #ffadd2; // Pink for Math
+      box-shadow: 0 10px 40px rgba(255, 173, 210, 0.4);
+    }
+
+    &.word-mode {
+      border-color: #91d5ff; // Blue for Words
+      box-shadow: 0 10px 40px rgba(145, 213, 255, 0.4);
+    }
+
+    &.count-mode {
+      border-color: #b7eb8f; // Green for Counting
+      box-shadow: 0 10px 40px rgba(183, 235, 143, 0.4);
+    }
+
+    .question-header {
+      font-size: 24px;
+      color: #555;
+      margin-bottom: 20px;
+      text-align: center;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .visual-area {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 30px;
+      position: relative;
+
+      .main-image {
+        max-height: 300px;
+        border-radius: 20px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      }
+
+      .math-equation {
+        font-size: 80px;
+        font-weight: 900;
+        color: #333;
+        text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+
+        .operator {
+          color: #ff4d4f;
+          margin: 0 15px;
+        }
+
+        .result-placeholder {
+          display: inline-block;
+          width: 80px;
+          height: 80px;
+          border-bottom: 5px solid #333;
+          text-align: center;
+          color: #1890ff;
+        }
+      }
+
+      .word-display {
+        font-size: 60px;
+        font-weight: bold;
+        color: #13c2c2;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+    }
+
+    .instruction-bar {
+      width: 100%;
+      background: #f0f2f5;
+      border-radius: 50px;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .hint-text {
+        font-size: 18px;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .gesture-icon {
+        font-size: 32px;
+      }
+    }
+  }
+
+  // Animation states
+  &.correct-answer {
+    .content-card {
+      transform: scale(1.05);
+      border-color: #52c41a;
+      box-shadow: 0 0 50px #52c41a;
+    }
+  }
+}
+
+// Media queries for responsiveness
+@media (max-width: 768px) {
+  .learning-story-page .content-card {
+    padding: 20px;
+
+    .visual-area .math-equation {
+      font-size: 40px;
+    }
+  }
+}

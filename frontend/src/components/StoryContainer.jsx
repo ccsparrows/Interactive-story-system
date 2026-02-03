@@ -4,6 +4,7 @@ import { Button, Spin, message, Select, Space } from 'antd';
 import { HomeOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import GestureCamera from './GestureCamera';
 import StoryPage from './StoryPage';
+import LearningStoryPage from './LearningStoryPage';
 import { getStoryById } from '../services/apiService';
 import '../styles/StoryContainer.less';
 
@@ -55,6 +56,16 @@ const StoryContainer = () => {
     setCurrentPageIndex(value);
   };
 
+  // 抽离成功的处理逻辑
+  const handleSuccess = useCallback(() => {
+    setLastGestureTime(Date.now());
+    setIsAnimating(true);
+    setTimeout(() => {
+      setIsAnimating(false);
+      handleNextPage();
+    }, 1500);
+  }, [handleNextPage]);
+
   const handleGesture = useCallback(
     (gesture) => {
       if (!story) return;
@@ -67,31 +78,29 @@ const StoryContainer = () => {
       if (!currentPage) return;
       let required = currentPage.requiredGesture;
 
-      // 移除旧的自动映射逻辑，现在 gestureService 会区分 OPEN_PALM 和 WAVE
-      // if (required === 'WAVE' && gesture === 'OPEN_PALM') gesture = 'WAVE';
-
       if (gesture === required) {
         console.log('Gesture Matched!');
-        setLastGestureTime(now);
-        setIsAnimating(true);
-
-        setTimeout(() => {
-          setIsAnimating(false);
-          handleNextPage();
-        }, 1500);
+        handleSuccess();
       }
     },
-    [story, currentPageIndex, lastGestureTime, handleNextPage]
+    [story, currentPageIndex, lastGestureTime, handleSuccess] // dependency updated
   );
 
-  // 处理点击翻页：如果故事是非交互类型，或者当前页不需要手势，则允许点击翻页
+  // 处理点击翻页：如果故事是非交互类型，或者当前页不需要手势（且不是语音类型），则允许点击翻页
+  // 注意：LearningStoryPage 如果是 'word' 类型，也不应该允许随便点击翻页，除非实现了另外的逻辑
   const handleClick = () => {
     if (!story) return;
 
     const currentPage = story.pages[currentPageIndex];
     // 如果故事本身是非交互的，或者当前页没有要求的动作，则允许点击翻页
+    // 如果是 'word' 学习类型，我们希望通过语音触发，所以这里可能要限制一下，防止误触，暂且允许
     if (story.type === 'non-interactive' || !currentPage?.requiredGesture) {
-      handleNextPage();
+      // 这里的逻辑有点微妙，如果 requiredGesture 为 null 可能会直接翻页
+      // 对于 voice 交互，我们希望由 LearningStoryPage 触发 onSuccess
+      // 所以如果 type 是 learning 且 subtype 是 word，我们在这里通过点击直接翻页作为一种"跳过"手段
+      if (story.subtype !== 'word') {
+        handleNextPage();
+      }
     }
   };
 
@@ -117,14 +126,23 @@ const StoryContainer = () => {
         返回首页
       </Button>
 
-      <StoryPage
-        page={story.pages[currentPageIndex]}
-        isAnimating={isAnimating}
-        onNextPage={handleNextPage}
-        onPrevPage={handlePrevPage}
-        currentPage={currentPageIndex + 1}
-        totalPages={story.pages.length}
-      />
+      {story.type === 'learning' ? (
+        <LearningStoryPage
+          page={story.pages[currentPageIndex]}
+          isAnimating={isAnimating}
+          learningType={story.subtype}
+          onSuccess={handleSuccess}
+        />
+      ) : (
+        <StoryPage
+          page={story.pages[currentPageIndex]}
+          isAnimating={isAnimating}
+          onNextPage={handleNextPage}
+          onPrevPage={handlePrevPage}
+          currentPage={currentPageIndex + 1}
+          totalPages={story.pages.length}
+        />
+      )}
 
       {story.type !== 'non-interactive' && <GestureCamera onGestureDetected={handleGesture} />}
     </div>
