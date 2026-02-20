@@ -1,6 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
+const fs = require('fs');
+const axios = require('axios');
+require('dotenv').config(); // 加载 .env 变量
 const initialStories = require('./data/stories.json');
 
 // 引入模型
@@ -14,6 +18,13 @@ const MONGODB_URI = 'mongodb://127.0.0.1:27018/interactive-story-system';
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// 静态资源服务：图片上传目录
+const uploadsDir = path.join(__dirname, '../public/uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
 
 // 连接 MongoDB
 mongoose
@@ -202,21 +213,44 @@ app.get('/api/stories/:id', async (req, res) => {
 // 添加新故事 (管理员)
 app.post('/api/stories', async (req, res) => {
   try {
-    const { title, cover, pages, ageRating } = req.body;
+    const { title, cover, pages, ageRating, type, subtype } = req.body;
 
     // 简单的 ID 生成策略
     const id = `story_${Date.now()}`;
 
-    // 自动判断类型：如果任意页面有 requiredGesture，则为 interactive
-    const calculatedType =
-      pages && pages.some((p) => p.requiredGesture && p.requiredGesture.trim() !== '')
-        ? 'interactive'
-        : 'non-interactive';
+    // 优先使用前端传来的 type，如果没有则自动判断
+    let finalType = type;
+    let finalSubtype = subtype;
+
+    if (!finalType || !finalSubtype) {
+      // 尝试自动推断 Learning 类型（根据第一页类型）
+      const firstPage = pages && pages.length > 0 ? pages[0] : null;
+      if (firstPage) {
+        if (firstPage.type === 'word') {
+          finalType = 'learning';
+          finalSubtype = 'word';
+        } else if (firstPage.type === 'math') {
+          finalType = 'learning';
+          finalSubtype = 'math';
+        } else if (firstPage.type === 'count') {
+          finalType = 'learning';
+          finalSubtype = 'count';
+        }
+      }
+
+      if (!finalType) {
+        finalType =
+          pages && pages.some((p) => p.requiredGesture && p.requiredGesture.trim() !== '')
+            ? 'interactive'
+            : 'non-interactive';
+      }
+    }
 
     const newStory = new Story({
       id,
       title,
-      type: calculatedType,
+      type: finalType,
+      subtype: finalSubtype,
       ageRating: ageRating || '3-6岁',
       cover,
       pages,
@@ -233,17 +267,40 @@ app.post('/api/stories', async (req, res) => {
 // 更新故事 (管理员)
 app.put('/api/stories/:id', async (req, res) => {
   try {
-    const { title, cover, pages, ageRating } = req.body;
+    const { title, cover, pages, ageRating, type, subtype } = req.body;
 
-    // 自动判断类型
-    const calculatedType =
-      pages && pages.some((p) => p.requiredGesture && p.requiredGesture.trim() !== '')
-        ? 'interactive'
-        : 'non-interactive';
+    // 优先使用前端传来的 type，如果没有则自动判断
+    let finalType = type;
+    let finalSubtype = subtype;
+
+    if (!finalType || !finalSubtype) {
+      // 尝试自动推断 Learning 类型（根据第一页类型）
+      const firstPage = pages && pages.length > 0 ? pages[0] : null;
+      if (firstPage) {
+        if (firstPage.type === 'word') {
+          finalType = 'learning';
+          finalSubtype = 'word';
+        } else if (firstPage.type === 'math') {
+          finalType = 'learning';
+          finalSubtype = 'math';
+        } else if (firstPage.type === 'count') {
+          finalType = 'learning';
+          finalSubtype = 'count';
+        }
+      }
+
+      // 如果还是没有推断出 Learning，则回退到原来的逻辑
+      if (!finalType) {
+        finalType =
+          pages && pages.some((p) => p.requiredGesture && p.requiredGesture.trim() !== '')
+            ? 'interactive'
+            : 'non-interactive';
+      }
+    }
 
     const updatedStory = await Story.findOneAndUpdate(
       { id: req.params.id },
-      { title, cover, pages, ageRating, type: calculatedType },
+      { title, cover, pages, ageRating, type: finalType, subtype: finalSubtype },
       { new: true }
     );
     if (updatedStory) {
@@ -268,6 +325,75 @@ app.delete('/api/stories/:id', async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Error deleting story', error: error.message });
   }
+});
+
+// 优化版：异步下载图片 (解决前端等待时间过长问题)
+app.post('/api/save-image', async (req, res) => {
+  const { imageUrl } = req.body;
+  if (!imageUrl) return res.status(400).json({ message: 'imageUrl is required' });
+
+  // 如果已经是本地链接或非临时链接，直接返回
+  if (imageUrl.includes('localhost') || imageUrl.startsWith('/')) {
+    return res.json({ url: imageUrl });
+  }
+
+  // 1. 预先生成文件名和路径
+  const filename = `ai_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
+  const filePath = path.join(uploadsDir, filename);
+  const localUrl = `http://localhost:${PORT}/uploads/${filename}`;
+
+  // 2. 立即创建占位符文件 (避免前端立即请求时 404)
+  // 如果有 placeholder_loading.svg 则复制，否则创建一个空的 0kb 文件或简单的文本
+  const placeholderPath = path.join(uploadsDir, 'placeholder_loading.svg');
+  if (fs.existsSync(placeholderPath)) {
+    try {
+      fs.copyFileSync(placeholderPath, filePath);
+    } catch (e) {
+      console.error('Error copying placeholder', e);
+    }
+  } else {
+    // 创建一个空的占位文件，前端显示可能裂图但不会404
+    fs.writeFileSync(filePath, '');
+  }
+
+  // 3. 立即响应给前端 (极速体验)
+  res.json({ url: localUrl });
+
+  // 4. 后台异步执行下载任务 (Fire and Forget)
+  (async () => {
+    try {
+      console.log(`[Background] Starting download for: ${filename}`);
+      const response = await axios({
+        url: imageUrl,
+        method: 'GET',
+        responseType: 'stream',
+      });
+
+      // 使用临时文件写入，下载完成后再重命名覆盖，防止读取到半张图
+      const tempFilePath = filePath + '.tmp';
+      const writer = fs.createWriteStream(tempFilePath);
+
+      response.data.pipe(writer);
+
+      writer.on('finish', () => {
+        // 下载完成，重命名覆盖占位图
+        fs.rename(tempFilePath, filePath, (err) => {
+          if (err) console.error(`[Background] Rename error for ${filename}:`, err);
+          else console.log(`[Background] Download success: ${filename}`);
+        });
+      });
+
+      writer.on('error', (err) => {
+        console.error(`[Background] Write error for ${filename}:`, err);
+        // 如果下载失败，删除临时文件，保留占位图或者删除占位图让前端404
+        if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
+      });
+    } catch (error) {
+      console.error(`[Background] Download failed for ${filename}:`, error.message);
+      // 可选：下载失败时删除占位图，让用户看到图片裂开而不是一直 loading
+      // if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+  })();
 });
 
 app.listen(PORT, () => {

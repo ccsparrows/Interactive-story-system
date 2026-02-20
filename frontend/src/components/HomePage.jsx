@@ -313,7 +313,9 @@ const HomePage = () => {
                                     {story.type === 'non-interactive' ? '📖 阅读' : '✨ 互动'}
                                   </Tag>
                                 )}
-                                <Tag color="orange">{story.pages?.length || 0} 页</Tag>
+                                <Tag color="orange">
+                                  {story.pageCount || story.pages?.length || 0} 页
+                                </Tag>
                                 <Tag color="cyan">{story.ageRating || '3-6岁'}</Tag>
                               </Space>
                             </div>

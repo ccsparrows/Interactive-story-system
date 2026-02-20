@@ -54,7 +54,9 @@ const ART_STYLES = [
 const AiStoryGenerator = ({ onStoryGenerated }) => {
   const [loading, setLoading] = useState(false);
   const [imageLoading, setImageLoading] = useState({}); // Track loading state per page
+  const [coverLoading, setCoverLoading] = useState(false); // Track cover loading state
   const [imageSettings, setImageSettings] = useState({}); // Track custom settings per page
+  const [coverSettings, setCoverSettings] = useState({}); // Track custom settings for cover
   const [step, setStep] = useState(0);
   const [generatedStory, setGeneratedStory] = useState(null);
   const [form] = Form.useForm();
@@ -84,27 +86,55 @@ const AiStoryGenerator = ({ onStoryGenerated }) => {
 
     try {
       // 构建提示词
+      let strictPageTypeInstruction = '';
+      let subtypeInstruction = '';
+
+      if (values.type === 'learning') {
+        if (values.subtype === 'word') {
+          subtypeInstruction = '这是一个【单词学习】故事。';
+          strictPageTypeInstruction =
+            '所有页面的 type 必须严格为 "word"。每页包含一个英文单词(expectedText)和中文释义(gestureHint)。不需要 requiredGesture (null)。';
+        } else if (values.subtype === 'count') {
+          subtypeInstruction = '这是一个【趣味数数】故事。';
+          strictPageTypeInstruction =
+            '所有页面的 type 必须严格为 "count"。每页包含数数问题、对应的数字手势(requiredGesture)和提示语(gestureHint)。';
+        } else if (values.subtype === 'math') {
+          subtypeInstruction = '这是一个【简单算术】故事。';
+          strictPageTypeInstruction =
+            '所有页面的 type 必须严格为 "math"。content 必须是算式(如 "1 + 1 = ?")。不需要 image (空字符串)。必须包含正确答案对应的数字手势(requiredGesture)。';
+        }
+      } else if (values.type === 'interactive') {
+        strictPageTypeInstruction =
+          '所有页面的 type 必须严格为 "interactive"。必须包含 requiredGesture (交互手势)。';
+      } else {
+        strictPageTypeInstruction =
+          '所有页面的 type 必须严格为 "normal"。requiredGesture 必须为 null。';
+      }
+
       const userPrompt = `
-          请创建一个关于 "${values.theme}" 的儿童互动故事。
-          类型: ${values.type} (${values.type === 'learning' ? '包含简单的认知/数学任务' : '包含手势互动环节'})
+          请创建一个关于 "${values.theme}" 的儿童故事。
+          主类型: ${values.type}
+          ${subtypeInstruction}
           面向年龄: ${values.age}
           额外要求: ${values.prompt || '无'}
           
+          ${strictPageTypeInstruction}
+
           请必须返回严格的 JSON 格式，结构如下:
           {
             "title": "故事标题",
             "type": "${values.type}",
-            "subtype": "${values.type === 'learning' ? 'count/math/word 其中之一' : ''}",
+            "subtype": "${values.subtype || ''}",
             "ageRating": "${values.age}",
             "pages": [
               {
                 "pageId": 1,
-                "type": "当前页类型: word | math | count | interactive | normal (根据故事类型和内容判断)",
-                "content": "剧情内容。如果是 word 类型，则仅输出英文单词。",
-                "expectedText": "如果是 word 类型，必填此字段(英文单词); 其他类型留空",
-                "imagePrompt": "该页面的英文绘画提示词(prompt)",
-                "requiredGesture": "交互动作: THUMB_UP / OPEN_PALM / WAVE / OK / VICTORY / CLOSED_FIST / HEART。注意: word 类型必须为 null; math/count 类型可选; interactive 类型必填",
-                "gestureHint": "给孩子的互动提示语。word 类型填中文释义; 其他类型填手势提示"
+                "type": "页类型，必须严格遵守上述规则(word/math/count/interactive/normal)",
+                "content": "剧情内容。word类型:英文单词; math类型:算式; 其他:故事文本",
+                "expectedText": "仅 word 类型必填(英文单词); 其他类型留空",
+                "imagePrompt": "word/count/interactive/normal 类型必填提示词; math 类型留空",
+                "requiredGesture": "交互动作: THUMB_UP / OPEN_PALM (表示5) / WAVE / OK (表示3) / VICTORY (表示2) / CLOSED_FIST / HEART / NUMBER_ONE / NUMBER_FOUR。注意：严禁使用 NUMBER_TWO 或 NUMBER_THREE，必须使用 VICTORY 和 OK。",
+                "gestureHint": "word类型:中文释义; math/count/interactive类型:手势提示"
               }
             ]
           }
@@ -146,6 +176,15 @@ const AiStoryGenerator = ({ onStoryGenerated }) => {
       // 补全一些可能缺失的字段
       aiContent.cover = 'https://placehold.co/400x300?text=AI+Cover';
 
+      // 修复 AI 可能产生的幻觉手势 (Normalization)
+      if (aiContent.pages && Array.isArray(aiContent.pages)) {
+        aiContent.pages.forEach((p) => {
+          if (p.requiredGesture === 'NUMBER_TWO') p.requiredGesture = 'VICTORY';
+          if (p.requiredGesture === 'NUMBER_THREE') p.requiredGesture = 'OK';
+          if (p.requiredGesture === 'NUMBER_FIVE') p.requiredGesture = 'OPEN_PALM';
+        });
+      }
+
       setGeneratedStory(aiContent);
       message.success({ content: '故事大纲已生成！', key: 'ai_gen' });
       setStep(1);
@@ -160,6 +199,7 @@ const AiStoryGenerator = ({ onStoryGenerated }) => {
           pages: [
             {
               pageId: 1,
+              type: 'interactive',
               content: `这是一个关于${values.theme}的奇幻开始...`,
               imagePrompt: `${values.theme}, fantasy children book illustration`,
               requiredGesture: 'THUMB_UP',
@@ -167,6 +207,7 @@ const AiStoryGenerator = ({ onStoryGenerated }) => {
             },
             {
               pageId: 2,
+              type: 'interactive',
               content: '遇到了新的挑战！',
               imagePrompt: `adventure scene, ${values.theme}`,
               requiredGesture: 'WAVE',
@@ -175,20 +216,79 @@ const AiStoryGenerator = ({ onStoryGenerated }) => {
           ],
         };
         if (values.type === 'learning') {
-          mockAiResponse.subtype = 'count';
-          mockAiResponse.pages = [
-            {
-              pageId: 1,
-              content: '这里有几个苹果？',
-              requiredGesture: 'OK',
-              gestureHint: '3个，做OK手势',
-              imagePrompt: '3 red apples',
-            },
-          ];
+          // Mock data handling for specific subtypes
+          if (values.subtype === 'count') {
+            mockAiResponse.subtype = 'count';
+            mockAiResponse.pages = [
+              {
+                pageId: 1,
+                type: 'count', // 严格对应 PAGE_TYPES.COUNT
+                content: '图中有几只小鸭子？',
+                requiredGesture: 'OK',
+                gestureHint: '3只，做OK手势',
+                imagePrompt: '3 cute yellow ducks swimming',
+              },
+              {
+                pageId: 2,
+                type: 'count',
+                content: '有几个红苹果？',
+                requiredGesture: 'VICTORY',
+                gestureHint: '2个，做耶的手势',
+                imagePrompt: '2 red apples on tree',
+              },
+            ];
+          } else if (values.subtype === 'word') {
+            mockAiResponse.subtype = 'word';
+            mockAiResponse.pages = [
+              {
+                pageId: 1,
+                type: 'word', // 严格对应 PAGE_TYPES.WORD
+                content: 'Apple',
+                expectedText: 'apple',
+                requiredGesture: null,
+                gestureHint: '苹果',
+                imagePrompt: 'a red apple',
+              },
+              {
+                pageId: 2,
+                type: 'word',
+                content: 'Banana',
+                expectedText: 'banana',
+                requiredGesture: null,
+                gestureHint: '香蕉',
+                imagePrompt: 'a yellow banana',
+              },
+            ];
+          } else if (values.subtype === 'math') {
+            mockAiResponse.subtype = 'math';
+            mockAiResponse.pages = [
+              {
+                pageId: 1,
+                type: 'math', // 严格对应 PAGE_TYPES.MATH
+                content: '1 + 1 = ?',
+                requiredGesture: 'VICTORY', // 2
+                gestureHint: '答案是2',
+                imagePrompt: '', // math page usually no background image or custom
+              },
+              {
+                pageId: 2,
+                type: 'math',
+                content: '2 + 1 = ?',
+                requiredGesture: 'OK', // 3
+                gestureHint: '答案是3',
+                imagePrompt: '',
+              },
+            ];
+          }
         }
+
+        // Mock 成功也要停止 timer
         setGeneratedStory(mockAiResponse);
         setStep(1);
-        message.success({ content: '演示模式：已生成 Mock 大纲 (请配置真实 Key)', key: 'ai_gen' });
+        message.success({
+          content: '演示模式：已生成 Mock 大纲 (请配置真实 Key)',
+          key: 'ai_gen',
+        });
         // -----------------------------------------------------
       } else {
         console.error(error);
@@ -239,17 +339,12 @@ const AiStoryGenerator = ({ onStoryGenerated }) => {
 
       // 假设返回结构 { data: [{ url: "..." }] }
       const imageUrl = data.data?.[0]?.url;
-      // 对于 Kolors 可能回传格式略有不同，但通常遵循 OpenAI 格式。如果需要适配 SiliconFlow 特殊格式请调整。
-      // SiliconFlow Kolors output follows standard format.
 
       if (!imageUrl) throw new Error('Image URL not found in response');
 
-      // 更新状态
+      // 更新状态 (仅使用临时链接预览，稍后在确认时统一转存)
       const newStory = { ...generatedStory };
       newStory.pages[pageIndex].image = imageUrl;
-      // Also update the prompt used if user edited it, so it persists?
-      // Optional: newStory.pages[pageIndex].imagePrompt = promptText;
-      // Keeping original prompt separate is better for "undo".
 
       setGeneratedStory(newStory);
       message.success({ content: '插图生成完成！', key: 'img_gen' });
@@ -271,12 +366,180 @@ const AiStoryGenerator = ({ onStoryGenerated }) => {
     }
   };
 
-  // 3. 提交到表单
-  const handleConfirm = () => {
-    if (onStoryGenerated) {
-      onStoryGenerated(generatedStory);
-      message.success('已填入编辑表单，请进行最后调整');
+  // 生成封面逻辑
+  const handleGenerateCover = async () => {
+    setCoverLoading(true);
+    message.loading({ content: 'AI 正在绘制封面...', key: 'cover_gen' });
+
+    try {
+      const settings = coverSettings;
+      const size = settings.size || '1024x1024';
+      const style = settings.style || 'children book style, cute, colorful';
+      const defaultPrompt = `Children's book cover, title "${generatedStory.title}", theme: ${generatedStory.theme || 'Adventure'}. cute, colorful, high quality, text title embedded design`;
+      const promptText = settings.prompt || defaultPrompt;
+
+      const fullPrompt = `${promptText}, ${style}, high quality`;
+
+      if (IMAGE_AI_KEY.includes('xxxx')) {
+        await new Promise((r) => setTimeout(r, 1500));
+        throw new Error('MOCK_MODE');
+      }
+
+      const response = await fetch(IMAGE_AI_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${IMAGE_AI_KEY}`,
+        },
+        body: JSON.stringify({
+          model: IMAGE_AI_MODEL,
+          prompt: fullPrompt,
+          image_size: size,
+          num_inference_steps: 25,
+          seed: Math.floor(Math.random() * 1000000),
+        }),
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message);
+      const imageUrl = data.data?.[0]?.url;
+
+      // 更新状态 (仅使用临时链接预览，稍后在确认时统一转存)
+      const newStory = { ...generatedStory, cover: imageUrl };
+      setGeneratedStory(newStory);
+      message.success({ content: '封面生成成功！', key: 'cover_gen' });
+    } catch (error) {
+      if (error.message === 'MOCK_MODE') {
+        const randomColor = Math.floor(Math.random() * 16777215).toString(16);
+        const settings = coverSettings;
+        const size = settings.size || '1024x1024';
+        const newStory = {
+          ...generatedStory,
+          cover: `https://placehold.co/${size.replace('x', 'x')}/${randomColor}/ffffff?text=Cover:${encodeURIComponent(generatedStory.title)}`,
+        };
+        setGeneratedStory(newStory);
+        message.success({ content: '演示模式: Mock 封面已生成', key: 'cover_gen' });
+      } else {
+        message.error({ content: '封面失败: ' + error.message, key: 'cover_gen' });
+      }
+    } finally {
+      setCoverLoading(false);
     }
+  };
+
+  // 3. 提交到表单 (在这里统一转存图片)
+  const handleConfirm = async () => {
+    if (!onStoryGenerated) return;
+
+    if (!generatedStory) {
+      // 没有任何生成内容时，可能不执行任何操作
+      return;
+    }
+
+    // 显示转存进度
+    const hide = message.loading('正在保存所有图片资源...', 0);
+
+    try {
+      // Deep copy to avoid mutating state directly during process
+      let finalStory = JSON.parse(JSON.stringify(generatedStory));
+
+      // Helper function: save if URL is external
+      const saveImageIfNeeded = async (url) => {
+        // 如果已经是本地地址或者非http地址，跳过
+        if (!url || url.includes('localhost') || !url.startsWith('http')) return url;
+
+        try {
+          const res = await fetch('http://localhost:5000/api/save-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: url }),
+          });
+          const data = await res.json();
+          if (data.url) return data.url;
+          return url;
+        } catch (e) {
+          console.error('Failed to save image:', url, e);
+          return url; // Fallback to original
+        }
+      };
+
+      // 1. 转存封面
+      if (finalStory.cover) {
+        finalStory.cover = await saveImageIfNeeded(finalStory.cover);
+      }
+
+      // 2. 转存所有页面的图片
+      if (finalStory.pages && Array.isArray(finalStory.pages)) {
+        // 并行处理以加快速度，或者串行处理以减少后端压力
+        // 这里选择串行循环，稳妥起见
+        for (let i = 0; i < finalStory.pages.length; i++) {
+          if (finalStory.pages[i].image) {
+            finalStory.pages[i].image = await saveImageIfNeeded(finalStory.pages[i].image);
+          }
+        }
+      }
+
+      hide();
+      onStoryGenerated(finalStory);
+      message.success('故事导入成功！');
+    } catch (err) {
+      hide();
+      console.error(err);
+      message.error('保存图片失败，请重试');
+    }
+  };
+
+  const renderCoverConfigContent = () => {
+    const settings = coverSettings;
+    const defaultPrompt = `Children's book cover, title "${generatedStory?.title}"`;
+
+    return (
+      <div style={{ width: 320 }}>
+        <div style={{ marginBottom: 12 }}>
+          <Text strong>封面提示词:</Text>
+          <TextArea
+            rows={3}
+            placeholder="输入封面描述..."
+            value={settings.prompt !== undefined ? settings.prompt : defaultPrompt}
+            onChange={(e) => setCoverSettings({ ...settings, prompt: e.target.value })}
+            style={{ marginTop: 5 }}
+          />
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <Text strong>尺寸:</Text>
+          <Select
+            style={{ width: '100%', marginTop: 5 }}
+            value={settings.size || '1024x1024'}
+            onChange={(val) => setCoverSettings({ ...settings, size: val })}
+          >
+            {ASPECT_RATIOS.map((r) => (
+              <Option key={r.value} value={r.value}>
+                {r.label}
+              </Option>
+            ))}
+          </Select>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <Text strong>风格:</Text>
+          <Select
+            style={{ width: '100%', marginTop: 5 }}
+            value={settings.style || 'children book style, cute, colorful'}
+            onChange={(val) => setCoverSettings({ ...settings, style: val })}
+          >
+            {ART_STYLES.map((s) => (
+              <Option key={s.value} value={s.value}>
+                {s.label}
+              </Option>
+            ))}
+          </Select>
+        </div>
+        <Button type="primary" block loading={coverLoading} onClick={handleGenerateCover}>
+          {generatedStory?.cover && !generatedStory.cover.includes('placehold')
+            ? '重新生成'
+            : '生成封面'}
+        </Button>
+      </div>
+    );
   };
 
   const renderImageConfigContent = (index) => {
@@ -398,12 +661,48 @@ const AiStoryGenerator = ({ onStoryGenerated }) => {
                 />
               </Form.Item>
 
-              <Form.Item name="type" label="故事类型" rules={[{ required: true }]}>
-                <Select size="large" placeholder="选择故事模式">
-                  <Option value="interactive">✨ 沉浸互动 (手势推动剧情)</Option>
-                  <Option value="learning">🎓 益智学习 (数数/单词/算术)</Option>
-                  <Option value="non-interactive">📖 传统绘本 (点击阅读)</Option>
-                </Select>
+              <Form.Item label="故事类型" required style={{ marginBottom: 0 }}>
+                <Space style={{ display: 'flex', width: '100%' }} align="start">
+                  <Form.Item
+                    name="type"
+                    rules={[{ required: true, message: '请选择主类型' }]}
+                    initialValue="interactive"
+                    style={{ flex: 1 }}
+                  >
+                    <Select
+                      size="large"
+                      placeholder="选择故事模式"
+                      onChange={(val) => {
+                        // Clear subtype if switching away from learning
+                        if (val !== 'learning') {
+                          form.setFieldsValue({ subtype: undefined });
+                        }
+                      }}
+                    >
+                      <Option value="interactive">✨ 沉浸互动 (手势推动剧情)</Option>
+                      <Option value="learning">🎓 益智学习 (专项训练)</Option>
+                      <Option value="non-interactive">📖 传统绘本 (点击阅读)</Option>
+                    </Select>
+                  </Form.Item>
+
+                  <Form.Item noStyle shouldUpdate={(prev, curr) => prev.type !== curr.type}>
+                    {({ getFieldValue }) => {
+                      return getFieldValue('type') === 'learning' ? (
+                        <Form.Item
+                          name="subtype"
+                          rules={[{ required: true, message: '请选择学习类型' }]}
+                          style={{ flex: 1 }}
+                        >
+                          <Select size="large" placeholder="选择学习类型">
+                            <Option value="word">🔤 单词学习 (读单词)</Option>
+                            <Option value="count">🔢 趣味数数 (做手势)</Option>
+                            <Option value="math">➕ 简单算术 (做手势)</Option>
+                          </Select>
+                        </Form.Item>
+                      ) : null;
+                    }}
+                  </Form.Item>
+                </Space>
               </Form.Item>
 
               <Form.Item name="age" label="适合年龄" initialValue="3-6岁">
@@ -505,22 +804,76 @@ const AiStoryGenerator = ({ onStoryGenerated }) => {
             </div>
 
             <div style={{ width: 300 }}>
-              <Card title="操作" style={{ position: 'sticky', top: 20 }}>
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <Button
-                    type="primary"
-                    block
-                    size="large"
-                    onClick={handleConfirm}
-                    icon={<EditOutlined />}
+              <div style={{ position: 'sticky', top: 20 }}>
+                <Card
+                  title="书籍封面"
+                  style={{ marginBottom: 20 }}
+                  cover={
+                    generatedStory.cover ? (
+                      <div style={{ position: 'relative', overflow: 'hidden' }}>
+                        <img
+                          alt="cover"
+                          src={generatedStory.cover}
+                          style={{
+                            width: '100%',
+                            height: 200,
+                            objectFit: 'cover',
+                            borderTopLeftRadius: 8,
+                            borderTopRightRadius: 8,
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          height: 200,
+                          background: '#fafafa',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#ccc',
+                          borderBottom: '1px solid #f0f0f0',
+                        }}
+                      >
+                        <Space direction="vertical" align="center">
+                          <PictureOutlined style={{ fontSize: 32 }} />
+                          <Text type="secondary">AI 封面预览</Text>
+                        </Space>
+                      </div>
+                    )
+                  }
+                >
+                  <Popover
+                    content={renderCoverConfigContent()}
+                    title="封面生成设置"
+                    trigger="click"
+                    placement="bottom"
                   >
-                    导入并继续编辑
-                  </Button>
-                  <Button block onClick={() => setStep(0)}>
-                    重新构思
-                  </Button>
-                </Space>
-              </Card>
+                    <Button block type="default" icon={<SettingOutlined />} loading={coverLoading}>
+                      {generatedStory.cover && !generatedStory.cover.includes('placehold')
+                        ? '调整 / 重新制作'
+                        : '一键生成封面'}
+                    </Button>
+                  </Popover>
+                </Card>
+
+                <Card title="操作">
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Button
+                      type="primary"
+                      block
+                      size="large"
+                      onClick={handleConfirm}
+                      icon={<EditOutlined />}
+                    >
+                      导入并继续编辑
+                    </Button>
+                    <Button block onClick={() => setStep(0)}>
+                      重新构思
+                    </Button>
+                  </Space>
+                </Card>
+              </div>
             </div>
           </div>
         </motion.div>

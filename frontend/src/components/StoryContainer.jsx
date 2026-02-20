@@ -69,12 +69,13 @@ const StoryContainer = () => {
   const handleGesture = useCallback(
     (gesture) => {
       if (!story) return;
-      if (story.type === 'non-interactive') return; // 非交互模式忽略手势
+      const currentPage = story.pages[currentPageIndex];
+      // 如果不是交互式故事且当前页不需要手势，则忽略
+      if (story.type === 'non-interactive' && !currentPage?.requiredGesture) return;
 
       const now = Date.now();
       if (now - lastGestureTime < 2000) return;
 
-      const currentPage = story.pages[currentPageIndex];
       if (!currentPage) return;
       let required = currentPage.requiredGesture;
 
@@ -98,18 +99,68 @@ const StoryContainer = () => {
       // 这里的逻辑有点微妙，如果 requiredGesture 为 null 可能会直接翻页
       // 对于 voice 交互，我们希望由 LearningStoryPage 触发 onSuccess
       // 所以如果 type 是 learning 且 subtype 是 word，我们在这里通过点击直接翻页作为一种"跳过"手段
-      if (story.subtype !== 'word') {
+      const pageType = currentPage.type || 'interactive';
+      if (pageType !== 'word') {
         handleNextPage();
       }
     }
   };
 
-  if (!story)
-    return (
-      <div className="loading-container">
-        <Spin size="large" tip="正在加载故事..." />
-      </div>
-    );
+  const renderPage = () => {
+    if (!story)
+      return (
+        <div className="loading-container">
+          <Spin size="large" tip="正在加载故事..." />
+        </div>
+      );
+
+    const currentPage = story.pages[currentPageIndex];
+    // 优先使用页面自己的类型，如果没有则回退到故事级别的类型逻辑（兼容旧数据）
+    let rawType = currentPage.type;
+
+    // Debug info (in production this would be removed, but helpful here)
+    // console.log('Page Type:', rawType, 'Story Type:', story.type, 'Subtype:', story.subtype);
+
+    let pageType = rawType;
+    if (!pageType) {
+      if (story.type === 'learning' && story.subtype) {
+        pageType = story.subtype;
+      } else {
+        pageType = 'interactive';
+      }
+    }
+
+    // Normalize type
+    pageType = pageType.trim().toLowerCase();
+    if (['math', 'word', 'count'].includes(pageType)) {
+      return (
+        <LearningStoryPage
+          page={currentPage}
+          isAnimating={isAnimating}
+          learningType={pageType}
+          onSuccess={handleSuccess}
+          onNextPage={handleNextPage}
+          onPrevPage={handlePrevPage}
+          currentPage={currentPageIndex + 1}
+          totalPages={story.pages.length}
+        />
+      );
+    } else {
+      // normal 或 interactive
+      return (
+        <StoryPage
+          page={currentPage}
+          isAnimating={isAnimating}
+          onNextPage={handleNextPage}
+          onPrevPage={handlePrevPage}
+          currentPage={currentPageIndex + 1}
+          totalPages={story.pages.length}
+        />
+      );
+    }
+  };
+
+  if (!story) return null;
 
   return (
     <div className="story-container" onClick={handleClick}>
@@ -126,25 +177,11 @@ const StoryContainer = () => {
         返回首页
       </Button>
 
-      {story.type === 'learning' ? (
-        <LearningStoryPage
-          page={story.pages[currentPageIndex]}
-          isAnimating={isAnimating}
-          learningType={story.subtype}
-          onSuccess={handleSuccess}
-        />
-      ) : (
-        <StoryPage
-          page={story.pages[currentPageIndex]}
-          isAnimating={isAnimating}
-          onNextPage={handleNextPage}
-          onPrevPage={handlePrevPage}
-          currentPage={currentPageIndex + 1}
-          totalPages={story.pages.length}
-        />
-      )}
+      {renderPage()}
 
-      {story.type !== 'non-interactive' && <GestureCamera onGestureDetected={handleGesture} />}
+      {(story.type !== 'non-interactive' || story.pages[currentPageIndex]?.requiredGesture) && (
+        <GestureCamera onGestureDetected={handleGesture} />
+      )}
     </div>
   );
 };

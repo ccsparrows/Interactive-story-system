@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Typography, Badge, Avatar, message } from 'antd';
+import { Typography, Badge, Avatar, message, Button } from 'antd';
 import {
   CalculatorOutlined,
   ReadOutlined,
@@ -8,12 +8,23 @@ import {
   BulbOutlined,
   CheckCircleFilled,
   AudioOutlined,
+  LeftOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
 import '../styles/LearningStoryPage.less';
 
 const { Title, Text } = Typography;
 
-const LearningStoryPage = ({ page, isAnimating, learningType, onSuccess }) => {
+const LearningStoryPage = ({
+  page,
+  isAnimating,
+  learningType,
+  onSuccess,
+  onNextPage,
+  onPrevPage,
+  currentPage,
+  totalPages,
+}) => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
 
@@ -216,6 +227,32 @@ const LearningStoryPage = ({ page, isAnimating, learningType, onSuccess }) => {
           exit={{ opacity: 0, scale: 0.9 }}
           className={`content-card ${currentType}-mode`}
         >
+          {/* Bookmark Nav */}
+          <div className="bookmark-nav" onClick={(e) => e.stopPropagation()}>
+            <div className="bookmark-content">
+              <Button
+                type="text"
+                size="small"
+                icon={<LeftOutlined />}
+                onClick={onPrevPage}
+                disabled={currentPage === 1}
+                className="nav-arrow"
+              />
+              <span className="page-num">
+                {currentPage} / {totalPages}
+              </span>
+              <Button
+                type="text"
+                size="small"
+                icon={<RightOutlined />}
+                onClick={onNextPage}
+                disabled={currentPage === totalPages}
+                className="nav-arrow"
+              />
+            </div>
+            <div className="bookmark-tail" />
+          </div>
+
           <div className="question-header">
             {getIcon()}
             <span style={{ marginLeft: 10, textAlign: 'center' }}>第 {page.pageId} 关</span>

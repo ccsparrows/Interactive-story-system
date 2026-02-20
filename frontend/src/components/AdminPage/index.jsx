@@ -101,7 +101,9 @@ const AdminPage = () => {
       cover: generatedStory.cover,
       subtype: generatedStory.subtype, // 学习类型需要此字段
       pages: flattenPages.map((p) => ({
+        type: p.type, // 确保传递页面类型
         content: p.content,
+        expectedText: p.expectedText,
         image: p.image,
         requiredGesture: p.requiredGesture,
         gestureHint: p.gestureHint,
