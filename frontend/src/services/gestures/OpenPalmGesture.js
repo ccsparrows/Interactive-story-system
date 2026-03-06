@@ -16,9 +16,16 @@ export default class OpenPalmGesture extends GestureStrategy {
 
     if (!fourFingersOpen) return false;
 
+    // 增加对 Heart 的防误判
+    const thumbTip = landmarks[4];
+    const indexTip = landmarks[8];
+    const distThumbIndex = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+
+    // 如果拇指和食指尖太近，即使 fingersOpen 判定为真，也不是 OpenPalm
+    if (distThumbIndex < 0.05) return false;
+
     // 区分 OpenPalm (5) 和 NumberFour (4)
     // OpenPalm 要求拇指张开（远离手掌中心）
-    const thumbTip = landmarks[4];
     const middleMCP = landmarks[9];
     const distThumbMiddle =
       Math.pow(thumbTip.x - middleMCP.x, 2) + Math.pow(thumbTip.y - middleMCP.y, 2);
@@ -28,6 +35,7 @@ export default class OpenPalmGesture extends GestureStrategy {
     const palmSizeSq = Math.pow(wrist.x - indexMCP.x, 2) + Math.pow(wrist.y - indexMCP.y, 2);
 
     // 拇指必须远离中指根部
-    return distThumbMiddle > palmSizeSq * 0.8;
+    // 调小阈值 (0.8 -> 0.6)，允许拇指稍微放松
+    return distThumbMiddle > palmSizeSq * 0.6;
   }
 }

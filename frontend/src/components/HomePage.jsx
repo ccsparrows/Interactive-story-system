@@ -22,6 +22,7 @@ import {
   StarFilled,
   BgColorsOutlined,
   CheckOutlined,
+  ExperimentOutlined,
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { getStories } from '../services/apiService';
@@ -212,16 +213,29 @@ const HomePage = () => {
             />
           </Popover>
           {user && user.role === 'admin' && (
-            <Button
-              type="primary"
-              icon={<SettingOutlined />}
-              onClick={() => navigate('/admin')}
-              shape="round"
-              size="large"
-              className="action-btn admin-btn"
-            >
-              管理后台
-            </Button>
+            <Space>
+              <Button
+                type="dashed"
+                icon={<ExperimentOutlined />}
+                onClick={() => navigate('/gesture-debug')}
+                shape="round"
+                size="large"
+                className="action-btn debug-btn"
+                style={{ borderColor: currentTheme.primaryColor, color: currentTheme.primaryColor }}
+              >
+                手势调试
+              </Button>
+              <Button
+                type="primary"
+                icon={<SettingOutlined />}
+                onClick={() => navigate('/admin')}
+                shape="round"
+                size="large"
+                className="action-btn admin-btn"
+              >
+                管理后台
+              </Button>
+            </Space>
           )}
           <Button
             danger

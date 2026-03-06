@@ -29,6 +29,7 @@ export default class NumberFourGesture extends GestureStrategy {
 
     // 如果拇指指尖距离中指根部较近 (小于手掌大小)，认为是内收
     // 这里的阈值需要和 OpenPalm 区分开
-    return distThumbMiddle < palmSizeSq * 0.8;
+    // 调小阈值 (0.8 -> 0.5)，避免 OpenPalm 误识为 4
+    return distThumbMiddle < palmSizeSq * 0.5;
   }
 }

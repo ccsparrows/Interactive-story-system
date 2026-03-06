@@ -10,6 +10,7 @@ import StoryContainer from "./components/StoryContainer";
 import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import AdminPage from "./components/AdminPage";
+import GestureDebugger from "./components/GestureDebugger";
 import "./styles/App.less";
 
 // 简单的路由保护组件
@@ -46,6 +47,14 @@ function App() {
             element={
               <PrivateRoute>
                 <StoryContainer />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/gesture-debug"
+            element={
+              <PrivateRoute>
+                <GestureDebugger />
               </PrivateRoute>
             }
           />

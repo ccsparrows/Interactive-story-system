@@ -26,14 +26,51 @@ export default class ClosedFistGesture extends GestureStrategy {
       return distTipSq < distPipSq || distTipSq < palmSizeSq * 2.5;
     };
 
+    const indexIndex = 8;
+    const indexPip = 6;
+
+    // 拇指伸直检测 (ThumbUp check)
+    // 如果拇指尖(4) 距离食指大关节(5) 太远，说明拇指翘起来了，或者伸出去了，不是紧握的拳头
+    const thumbTip = landmarks[4];
+    const indexMCP = landmarks[5];
+    const distThumbTipToMCP = Math.hypot(thumbTip.x - indexMCP.x, thumbTip.y - indexMCP.y);
+
+    // 阈值：如果是握拳，拇指是扣在食指/中指上面的，距离很近 (0.05-0.1)
+    // 如果是 ThumbUp，距离很大 (>0.15)
+    // 注意：需要确保前面已定义 thumbTip, indexMCP
+    if (distThumbTipToMCP > 0.12) return false;
+
     // 检查食指、中指、无名指、小指
     const indexCurled = isCurled(8, 6);
     const middleCurled = isCurled(12, 10);
     const ringCurled = isCurled(16, 14);
     const pinkyCurled = isCurled(20, 18);
 
-    // 只要四指卷曲，且拇指没有被前面的 ThumbUp 策略捕获（说明拇指不是明显伸直），
-    // 我们就认为是握拳。
-    return indexCurled && middleCurled && ringCurled && pinkyCurled;
+    if (!(indexCurled && middleCurled && ringCurled && pinkyCurled)) return false;
+
+    // 增加 Heart 的反向排除。
+    // 比心时，食指虽然弯曲，但并没有"死死地"压在手心。
+    // 检查 Index PIP (6) 到 Thumb IP (3) 的距离。
+    // 如果这个距离 比较大，说明可能是 Heart (有洞)。
+
+    const indexPIP = landmarks[6];
+    const thumbIP = landmarks[3];
+    const distHole = Math.hypot(indexPIP.x - thumbIP.x, indexPIP.y - thumbIP.y);
+
+    // 如果洞很大，肯定不是拳头
+    // 阈值：需要调整
+    if (distHole > 0.08) return false;
+
+    // 增加 7 的反向排除
+    // 7手势中，食指和中指的指尖是捏在一起的，并且向前伸出
+    // 拳头中，指尖是紧贴手掌的
+    const indexTip = landmarks[8];
+    const distIndexTipToWrist = Math.hypot(indexTip.x - wrist.x, indexTip.y - wrist.y);
+    const palmSize = Math.hypot(middleMcp.x - wrist.x, middleMcp.y - wrist.y);
+
+    // 如果食指指尖距离手腕较远，说明手指是伸出去的（比如7），而不是握紧的拳头
+    if (distIndexTipToWrist > palmSize * 1.2) return false;
+
+    return true;
   }
 }
